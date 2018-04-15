@@ -1,0 +1,23 @@
+body {
+  background-color: #fff;
+  font-family: 'Exo 2', Lato, 'PT Sans', -apple-system, BlinkMacSystemFont,
+    Roboto, Ubuntu, 'Droid Sans', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 1rem;
+}
+
+html {
+  box-sizing: border-box;
+  height: 100%;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
+div,
+p {
+  margin: 0;
+  padding: 0;
+}
