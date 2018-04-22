@@ -45,7 +45,11 @@
     "gulp-uglify": "^3.0.0",
     "gulp-wait": "0.0.2",
     "jasmine": "^2.8.0",
+    "loglevel": "^1.6.1",
     "postcss-uncss": "^0.15.0",
     "uncss": "^0.15.0"
+  },
+  "dependencies": {
+    "gulp-image": "^4.3.0"
   }
 }

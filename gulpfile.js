@@ -26,8 +26,9 @@ const dirs = {
 };
 
 const copiedJs = [
-  './node_modules/whatwg-fetch/fetch.js',
-  './node_modules/es6-promise/dist/es6-promise.auto.js'
+  // './node_modules/whatwg-fetch/fetch.js',
+  // './node_modules/es6-promise/dist/es6-promise.auto.js',
+  './node_modules/loglevel/dist/loglevel.js'
 ];
 
 const postCssPlugins = [
