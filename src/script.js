@@ -2,6 +2,7 @@
 /* eslint vars-on-top: 0 */
 /* eslint prefer-const: 0 */
 /* eslint arrow-parens: 0 */
+/* eslint no-restricted-syntax: 0 */
 
 /*
   (game engine) implement sequence generator;
@@ -39,8 +40,36 @@ var App = {
     log.debug('Play sound on a mouse click');
     log.trace(e);
     this.changeStyle(e.target);
-    this.play(e);
+    var value = this.soundLib[e.target.id.split('_')[1]];
+    this.play(value);
     this.stop();
+  },
+};
+
+var GameEngine = {
+  playSequence(sequence, step) {
+    log.debug(`Playing sequence on step ${step}`);
+    for (let i of sequence.slice(0, step - 1)) {
+      var elm = this.getElementByName(i);
+      this.playSound({ target: elm });
+    }
+  },
+
+  randomRange(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  },
+
+  generateSequence(length) {
+    log.debug('Generating sequence');
+    var sequence = new Array(length).fill(undefined);
+    sequence.reduce((prev, current, ndx) => {
+      do {
+        current = this.randomRange(Object.keys(this.soundLib));
+      } while (prev === current);
+      sequence[ndx] = current;
+      return current;
+    }, '');
+    return sequence;
   },
 };
 
@@ -58,9 +87,8 @@ var SoundGen = {
     this.oscillator.type = 'sine';
   },
 
-  play(e) {
+  play(value) {
     this.setup();
-    var value = this.soundLib[e.target.id.split('_')[1]];
     log.debug(`Tone value: ${value}`);
     this.oscillator.frequency.setValueAtTime(value, this.context.currentTime);
     this.gainNode.gain.setValueAtTime(0, this.context.currentTime);
@@ -69,7 +97,23 @@ var SoundGen = {
       this.context.currentTime + 0.01,
     );
     this.oscillator.start(this.context.currentTime);
-    this.stop(this.context.currentTime);
+    this.stop();
+  },
+
+  playInTime(value, time) {
+    this.setup();
+    log.debug(`Tone value: ${value}`);
+    this.oscillator.frequency.setValueAtTime(
+      value,
+      this.context.currentTime + time,
+    );
+    this.gainNode.gain.setValueAtTime(0, this.context.currentTime + time);
+    this.gainNode.gain.linearRampToValueAtTime(
+      1,
+      this.context.currentTime + time + 0.01,
+    );
+    this.oscillator.start(this.context.currentTime + time);
+    this.stopAtTime(time);
   },
 
   stop() {
@@ -78,6 +122,14 @@ var SoundGen = {
       this.context.currentTime + 1,
     );
     this.oscillator.stop(this.context.currentTime + 1);
+  },
+
+  stopAtTime(time) {
+    this.gainNode.gain.exponentialRampToValueAtTime(
+      0.001,
+      this.context.currentTime + time + 1,
+    );
+    this.oscillator.stop(this.context.currentTime + time + 1);
   },
 };
 
@@ -94,10 +146,14 @@ var UI = {
     elm.classList.toggle('--blink');
     setTimeout(() => elm.classList.toggle('--blink'), 300);
   },
+
+  getElementByName(name) {
+    return document.querySelector(`#button_${name}`);
+  },
 };
 
 log.setLevel('debug');
-Object.assign(App, SoundGen, UI);
+Object.assign(App, SoundGen, GameEngine, UI);
 App.init();
 App.start();
 App.listen();
