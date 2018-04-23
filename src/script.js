@@ -25,7 +25,7 @@ var App = {
       LR: 329.628,
     };
     this.simonSwipeSounds = {
-      UL: 783.991,
+      UL: 523.251, // 783.991 - original
       UR: 329.628,
       LL: 261.63,
       LR: 391.995,
@@ -137,9 +137,11 @@ var UI = {
   listen() {
     log.debug('Listening on UI');
     var buttons = document.querySelectorAll('.buttonGame');
+    var btnPower = document.querySelector('#btnPower');
     log.trace('Buttons selected:');
     log.trace(buttons);
     buttons.forEach(btn => btn.addEventListener('click', this.playSound));
+    btnPower.addEventListener('click', this.togglePressedState);
   },
 
   changeStyle(elm) {
@@ -149,6 +151,10 @@ var UI = {
 
   getElementByName(name) {
     return document.querySelector(`#button_${name}`);
+  },
+
+  togglePressedState(e) {
+    e.target.classList.toggle('--pressed');
   },
 };
 
