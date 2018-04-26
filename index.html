@@ -5,25 +5,34 @@
   <title>Simon</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta charset="utf-8">
-  <!-- <link href="https://fonts.googleapis.com/css?family=Exo+2" rel="stylesheet"> -->
+  <link href="https://fonts.googleapis.com/css?family=Exo+2" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css?family=Orbitron" rel="stylesheet">
   <link href="css/style.css" rel="stylesheet">
 </head>
 
 <body>
   <div class="main">
-    <div class="buttonGame button__UL" id="button_UL"></div>
-    <div class="buttonGame button__UR" id="button_UR"></div>
-    <div class="buttonGame button__LL" id="button_LL"></div>
-    <div class="buttonGame button__LR" id="button_LR"></div>
+    <div class="buttonGame button__UL" id="button_UL" tabindex="0"></div>
+    <div class="buttonGame button__UR" id="button_UR" tabindex="0"></div>
+    <div class="buttonGame button__LL" id="button_LL" tabindex="0"></div>
+    <div class="buttonGame button__LR" id="button_LR" tabindex="0"></div>
     <nav class="menu">
       <div class="menu__dialog">
         <span class="message">20</span>
       </div>
       <div class="wrapper">
-        <div class="menu__btn  --red" id="btnPower"></div>
-        <div class=" menu__btn --green"></div>
-        <div class="menu__btn --yellow"></div>
+        <div class="menu__group">
+          <div class="menu__btn  --red" id="btnPower" tabindex="0"></div>
+          <span class="menu__label">On/Off</span>
+        </div>
+        <div class="menu__group">
+          <div class=" menu__btn --green" tabindex="0"></div>
+          <span class="menu__label">Repeat</span>
+        </div>
+        <div class="menu__group">
+          <div class="menu__btn --yellow" tabindex="0"></div>
+          <span class="menu__label">Strict</span>
+        </div>
       </div>
     </nav>
   </div>
