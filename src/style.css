@@ -98,9 +98,23 @@ body {
 
 .wrapper {
   display: flex;
-  flex: 0 0 30%;
+  flex: 0 0 35%;
   justify-content: space-between;
-  width: 60%;
+  width: 70%;
+}
+
+.menu__group {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+}
+
+.menu__label {
+  color: var(--primary-color);
+  font-family: 'Exo 2';
+  font-size: 0.6rem;
+  margin-top: 0.6rem;
+  text-align: center;
 }
 
 .menu__btn {
@@ -162,4 +176,8 @@ p,
 button {
   margin: 0;
   padding: 0;
+}
+
+*:focus {
+  outline: none;
 }

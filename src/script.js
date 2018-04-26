@@ -5,9 +5,33 @@
 /* eslint no-restricted-syntax: 0 */
 
 /*
-  (game engine) implement sequence generator;
+  +(game engine) implement sequence generator;
+  (game engine) implement game loop;
   (UI) add control panel;
+  +(UI) conditions to stop requestAnimationFrame loop;
+  (Improvement) add tempo control to UI;
 
+*/
+
+/* Notes and game flow
+To implement accessible game I need to assing special keyboard layout
+to game process - map mouse gestures to keys;
+
+Buttons in game:
+On/Off
+Repeat
+Strict
+
+Game process:
+1. On Start game load the game engine.
+2. Choose a random sequence and keep it as current.
+3. Save current game position - 1. 
+4. Play sequence from beginning to the current position inclusive.
+5. Wait for user input.
+6. Compare each entered element with corresponding element in sequence.
+7. On error: show message; buzz.
+8. On success: move current position one element right; repeat from step 3.
+8. On success in strict mode: repeat from step 2.
 */
 
 /*
@@ -16,6 +40,35 @@ UR: A -  440
 LL: C# - 277.18
 LR: E -  329.628
 */
+
+// First, let's shim the requestAnimationFrame API, with a setTimeout fallback
+window.requestAnimFrame = (() => {
+  return (
+    window.requestAnimationFrame ||
+    window.webkitRequestAnimationFrame ||
+    window.mozRequestAnimationFrame ||
+    window.oRequestAnimationFrame ||
+    window.msRequestAnimationFrame ||
+    (callback => window.setTimeout(callback, 1000 / 60))
+  );
+})();
+
+window.cancelAnimFrame = (() => {
+  return (
+    window.cancelAnimationFrame ||
+    window.webkitCancelAnimationFrame ||
+    window.mozCancelAnimationFrame ||
+    window.oCancelAnimationFrame ||
+    window.msCancelAnimationFrame ||
+    window.cancelRequestAnimationFrame ||
+    window.webkitRequestCancelAnimationFrame ||
+    window.mozRequestCancelAnimationFrame ||
+    window.oRequestCancelAnimationFrame ||
+    window.msRequestCancelAnimationFrame ||
+    (id => clearTimeout(id))
+  );
+})();
+
 var App = {
   init() {
     this.originalSimonSounds = {
@@ -33,6 +86,11 @@ var App = {
     this.soundLib = this.simonSwipeSounds;
     this.stepsInGame = 30;
     this.currentStep = 1;
+    this.tempo = 160;
+    this.notesInQueue = [];
+    this.lastNote = '';
+    this.requestId = -1;
+    this.sequence = this.generateSequence(this.stepsInGame);
     this.playSound = this.playSound.bind(this);
   },
 
@@ -42,17 +100,19 @@ var App = {
     this.changeStyle(e.target);
     var value = this.soundLib[e.target.id.split('_')[1]];
     this.play(value);
-    this.stop();
   },
-};
 
-var GameEngine = {
   playSequence(sequence, step) {
     log.debug(`Playing sequence on step ${step}`);
-    for (let i of sequence.slice(0, step - 1)) {
-      var elm = this.getElementByName(i);
-      this.playSound({ target: elm });
-    }
+    sequence.slice(0, step).forEach((note, ndx) => {
+      this.notesInQueue.push({
+        note,
+        time: ndx * 60 / this.tempo + this.context.currentTime,
+      });
+      this.playInTime(this.soundLib[note], ndx * 60 / this.tempo);
+    });
+    log.debug(JSON.stringify(this.notesInQueue));
+    this.requestId = window.requestAnimFrame(this.draw);
   },
 
   randomRange(arr) {
@@ -142,6 +202,7 @@ var UI = {
     log.trace(buttons);
     buttons.forEach(btn => btn.addEventListener('click', this.playSound));
     btnPower.addEventListener('click', this.togglePressedState);
+    this.draw = this.draw.bind(this);
   },
 
   changeStyle(elm) {
@@ -156,10 +217,36 @@ var UI = {
   togglePressedState(e) {
     e.target.classList.toggle('--pressed');
   },
+
+  draw() {
+    var currentTime = this.context.currentTime;
+    var currentNote;
+    log.debug(
+      `Inside this.draw() notesInQueue: ${JSON.stringify(this.notesInQueue)}`,
+    );
+    while (
+      this.notesInQueue.length > 0 &&
+      this.notesInQueue[0].time < currentTime
+    ) {
+      currentNote = this.notesInQueue[0].note;
+      this.notesInQueue.splice(0, 1);
+    }
+
+    log.debug(`currentNote: ${currentNote}, lastNote: ${this.lastNote}`);
+    if (currentNote !== undefined && this.lastNote !== currentNote) {
+      this.changeStyle(this.getElementByName(currentNote));
+      this.lastNote = currentNote;
+    }
+    this.requestId = window.requestAnimFrame(this.draw);
+    if (this.notesInQueue.length === 0) {
+      window.cancelAnimationFrame(this.requestId);
+      this.requestId = undefined;
+    }
+  },
 };
 
 log.setLevel('debug');
-Object.assign(App, SoundGen, GameEngine, UI);
+Object.assign(App, SoundGen, UI);
 App.init();
 App.start();
 App.listen();
