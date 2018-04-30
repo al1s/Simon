@@ -10,6 +10,9 @@
   +(UI) add control panel;
   +(UI) conditions to stop requestAnimationFrame loop;
   +(UI) make UI elements wait till current routine executes;
+  +(game) test thorouhgly:
+    - strict is not working;
+    - sometimes after error it starts to play the whole sequence;
   (Improvement) add tempo control to UI;
 
 */
@@ -99,8 +102,7 @@ var App = {
       ['E2', 0.25],
       [['C2', 'E2', 'G2'], 0.5],
     ];
-    // this.stepsInGame = 20;
-    this.stepsInGame = 3;
+    this.stepsInGame = 20;
     this.currentStep = 1;
     this.currentNoteInStep = 1;
     this.tempo = 120;
@@ -185,8 +187,10 @@ var App = {
     this.currentNoteInStep = 1;
     this.sequence = this.generateSequence(this.stepsInGame);
     this.syncMessage(this.messageStop);
+    this.togglePressedState(e);
     setTimeout(() => {
       this.syncMessage(this.currentStep);
+      this.togglePressedState(e);
       this.playSequence(this.sequence, this.currentStep);
     }, this.reactionDelay);
   },
@@ -254,12 +258,13 @@ var UI = {
       this.syncMessage(this.messageError);
 
       if (this.strictMode) {
-        setTimeout(() => this.handleStart(), this.reactionDelay);
+        setTimeout(() => this.handleStart(), this.reactionDelay * 2);
       } else {
-        setTimeout(
-          () => this.syncMessage(this.currentStep),
-          this.reactionDelay,
-        );
+        this.currentNoteInStep = 1;
+        setTimeout(() => {
+          this.syncMessage(this.currentStep);
+          this.playSequence(this.sequence, this.currentStep);
+        }, this.reactionDelay);
       }
     }
   },
@@ -267,12 +272,12 @@ var UI = {
   playSound(e) {
     log.debug('Play sound on a mouse click');
     log.trace(e);
-    let value = [this.getNote(e)];
+    let value = this.getNote(e);
     this.playSequence([value], 1);
   },
 
   togglePressedState(e) {
-    e.target.classList.toggle('--pressed');
+    if (e) e.target.classList.toggle('--pressed');
   },
 
   setStrictMode(e) {
@@ -299,7 +304,7 @@ var UI = {
       this.notesInQueue.splice(0, 1);
     }
 
-    log.debug(
+    log.trace(
       `Styling button; currentNote: ${currentNote}, lastNote: ${
         this.lastNoteToDraw
       }`,
