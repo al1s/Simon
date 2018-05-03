@@ -10,6 +10,7 @@
   +(UI) add control panel;
   +(UI) conditions to stop requestAnimationFrame loop;
   +(UI) make UI elements wait till current routine executes;
+  (UI) block game buttons while playing sequence;
   +(game) test thorouhgly:
     - strict is not working;
     - sometimes after error it starts to play the whole sequence;
@@ -88,20 +89,6 @@ var App = {
       LR: 391.995,
     };
     this.soundLib = this.simonSwipeSounds;
-    this.fanfareSounds = {
-      G1: 392.0,
-      C2: 523.251,
-      E2: 659.255,
-      G2: 783.99,
-    };
-    this.fanfareSeq = [
-      ['G1', 0.25],
-      ['C2', 0.25],
-      ['E2', 0.25],
-      ['G2', 0.5],
-      ['E2', 0.25],
-      [['C2', 'E2', 'G2'], 0.5],
-    ];
     this.stepsInGame = 20;
     this.currentStep = 1;
     this.currentNoteInStep = 1;
@@ -134,26 +121,34 @@ var App = {
         note,
         time: ndx * 60 / this.tempo + this.context.currentTime,
       });
-      this.playInTime(this.soundLib[note], ndx * 60 / this.tempo);
+      // this.playInTime(this.soundLib[note], ndx * 60 / this.tempo);
     });
     log.debug(JSON.stringify(this.notesInQueue));
     this.requestId = window.requestAnimFrame(this.draw);
+    return Promise.all(
+      this.notesInQueue.map(item =>
+        this.playInTimePromise(
+          this.soundLib[item.note],
+          item.time - this.context.currentTime,
+        ),
+      ),
+    );
   },
 
-  playPhrase(sequence) {
+  playPhrase(sequence, soundLib) {
     log.debug('Playing musical phrase');
     let time = 0;
     sequence.forEach((note, ndx) => {
       console.log(`note in phrase: ${note}`);
       if (typeof note[0] !== 'object') {
-        this.playInTime(this.fanfareSounds[note[0]], time);
+        this.playInTime(soundLib[note[0]], time);
         this.notesInQueue.push({
           note: this.gameButtonNames[ndx > 3 ? ndx % 4 : ndx],
           time: time + this.context.currentTime,
         });
       } else {
         note[0].forEach(item => {
-          this.playInTime(this.fanfareSounds[item], time, time);
+          this.playInTime(soundLib[item], time, time);
           this.notesInQueue.push({
             note: 'ALL',
             time: time + this.context.currentTime,
@@ -182,6 +177,137 @@ var App = {
     return sequence;
   },
 
+  handleWin() {
+    let fanfareSeq = [
+      ['G1', 0.25],
+      ['C2', 0.25],
+      ['E2', 0.25],
+      ['G2', 0.5],
+      ['E2', 0.25],
+      [['C2', 'E2', 'G2'], 0.5],
+    ];
+    let fanfareSounds = {
+      G1: 392.0,
+      C2: 523.251,
+      E2: 659.255,
+      G2: 783.99,
+    };
+    this.playPhrase(fanfareSeq, fanfareSounds);
+  },
+
+  repeatSequence() {
+    this.pauseListen();
+    this.later(this.reactionDelay * 0.5, [this.sequence, this.currentStep])
+      .then(args => this.playSequence(...args))
+      .then(() => this.resumeListen());
+  },
+};
+
+var UI = {
+  listen() {
+    log.debug('Listening on UI');
+    this.soundButtons = document.querySelectorAll('.buttonGame');
+    this.repeatBtn = document.querySelector('#btnRepeat');
+    let startBtn = document.querySelector('#btnStart');
+    let strictBtn = document.querySelector('#btnStrict');
+    log.trace('Buttons selected:');
+    log.trace(this.soundButtons);
+    startBtn.addEventListener('click', this.handleStart);
+    this.soundButtons.forEach(btn =>
+      btn.addEventListener('click', this.handleGameState),
+    );
+    this.repeatBtn.addEventListener('click', this.repeatSequence);
+    strictBtn.addEventListener('click', this.setStrictMode);
+    this.pauseListen();
+  },
+
+  pauseListen() {
+    log.debug('Pause listening on color buttons');
+    [...this.soundButtons, this.repeatBtn].forEach(elm =>
+      this.pauseListenElm(elm),
+    );
+  },
+
+  resumeListen() {
+    log.debug('Resume listening on color buttons');
+    [...this.soundButtons, this.repeatBtn].forEach(elm =>
+      this.resumeListenElm(elm),
+    );
+  },
+
+  pauseListenElm(elm) {
+    elm.classList.add('--noevents');
+  },
+
+  resumeListenElm(elm) {
+    elm.classList.remove('--noevents');
+  },
+
+  blinkAttr(elm, className) {
+    elm.classList.toggle(className);
+    setTimeout(() => elm.classList.toggle(className), 200);
+  },
+
+  changeStyle(elm) {
+    var noteName = this.getNote({ target: elm });
+    this.blinkAttr(elm, `--blink-${noteName}`);
+  },
+
+  getElementByName(name) {
+    return document.querySelector(`#button_${name}`);
+  },
+
+  getNote(e) {
+    return e.target.id.split('_')[1];
+  },
+
+  handleGameState(e) {
+    this.playSound(e);
+    this.pauseListen();
+    var notePressed = this.getNote(e);
+    if (this.sequence[this.currentNoteInStep - 1] === notePressed) {
+      log.debug('Bingo!');
+      // We've played the whole step
+      if (this.currentNoteInStep === this.currentStep) {
+        // we've played the whole sequence
+        if (this.currentStep === this.stepsInGame) {
+          this.syncMessage(this.messageWin);
+          this.later(this.reactionDelay).then(this.handleWin());
+          // we are still somewhere in a sequence and ready for a new step
+        } else {
+          this.currentStep += 1;
+          this.currentNoteInStep = 1;
+          this.syncMessage(this.currentStep);
+          this.later(this.reactionDelay, [this.sequence, this.currentStep])
+            .then(args => this.playSequence(...args))
+            .then(() => this.resumeListen());
+        }
+        // wait for another note in current step
+      } else {
+        this.currentNoteInStep += 1;
+        this.resumeListen();
+      }
+    } else {
+      log.debug('Missed!');
+      this.syncMessage(this.messageError);
+      if (this.strictMode) {
+        this.later(this.reactionDelay * 2).then(() => this.handleStart());
+      } else {
+        this.currentNoteInStep = 1;
+        this.later(this.reactionDelay, [this.currentStep])
+          .then(args => {
+            this.syncMessage(...args);
+            return this.later(this.reactionDelay, [
+              this.sequence,
+              this.currentStep,
+            ]);
+          })
+          .then(args => this.playSequence(...args))
+          .then(() => this.resumeListen());
+      }
+    }
+  },
+
   handleStart(e) {
     this.currentStep = 1;
     this.currentNoteInStep = 1;
@@ -200,101 +326,8 @@ var App = {
           this.currentStep,
         ]);
       })
-      .then(args => this.playSequence(...args));
-    // setTimeout(() => {
-    //   this.syncMessage(this.currentStep);
-    //   this.togglePressedState(e);
-    //   this.playSequence(this.sequence, this.currentStep);
-    // }, this.reactionDelay);
-  },
-
-  handleWin() {
-    this.playPhrase(this.fanfareSeq);
-  },
-
-  repeatSequence() {
-    this.playSequence(this.sequence, this.currentStep);
-  },
-};
-
-var UI = {
-  listen() {
-    log.debug('Listening on UI');
-    let soundButtons = document.querySelectorAll('.buttonGame');
-    let startBtn = document.querySelector('#btnStart');
-    let repeatBtn = document.querySelector('#btnRepeat');
-    let strictBtn = document.querySelector('#btnStrict');
-    log.trace('Buttons selected:');
-    log.trace(soundButtons);
-    startBtn.addEventListener('click', this.handleStart);
-    soundButtons.forEach(btn =>
-      btn.addEventListener('click', this.handleGameState),
-    );
-    repeatBtn.addEventListener('click', this.repeatSequence);
-    strictBtn.addEventListener('click', this.setStrictMode);
-  },
-
-  changeStyle(elm) {
-    elm.classList.toggle('--blink');
-    setTimeout(() => elm.classList.toggle('--blink'), 200);
-  },
-
-  getElementByName(name) {
-    return document.querySelector(`#button_${name}`);
-  },
-
-  getNote(e) {
-    return e.target.id.split('_')[1];
-  },
-
-  handleGameState(e) {
-    this.playSound(e);
-    var notePressed = this.getNote(e);
-    if (this.sequence[this.currentNoteInStep - 1] === notePressed) {
-      log.debug('Bingo!');
-      if (this.currentNoteInStep === this.currentStep) {
-        if (this.currentStep === this.stepsInGame) {
-          this.syncMessage(this.messageWin);
-          this.later(this.reactionDelay).then(this.handleWin());
-          // setTimeout(() => this.handleWin(), this.reactionDelay);
-        } else {
-          this.currentStep += 1;
-          this.currentNoteInStep = 1;
-          this.syncMessage(this.currentStep);
-          this.later(this.reactionDelay, [
-            this.sequence,
-            this.currentStep,
-          ]).then(args => this.playSequence(...args));
-          // setTimeout(
-          //   () => this.playSequence(this.sequence, this.currentStep),
-          //   this.reactionDelay,
-          // );
-        }
-      } else this.currentNoteInStep += 1;
-    } else {
-      log.debug('Missed!');
-      this.syncMessage(this.messageError);
-
-      if (this.strictMode) {
-        this.later(this.reactionDelay * 2).then(() => this.handleStart());
-        // setTimeout(() => this.handleStart(), this.reactionDelay * 2);
-      } else {
-        this.currentNoteInStep = 1;
-        this.later(this.reactionDelay, [this.currentStep])
-          .then(args => {
-            this.syncMessage(...args);
-            return this.later(this.reactionDelay, [
-              this.sequence,
-              this.currentStep,
-            ]);
-          })
-          .then(args => this.playSequence(...args));
-        // setTimeout(() => {
-        //   this.syncMessage(this.currentStep);
-        //   this.playSequence(this.sequence, this.currentStep);
-        // }, this.reactionDelay);
-      }
-    }
+      .then(args => this.playSequence(...args))
+      .then(() => this.resumeListen());
   },
 
   later(delay, value = []) {
@@ -388,6 +421,26 @@ var SoundGen = {
     );
     this.oscillator.start(this.context.currentTime + time);
     this.stopAtTime(time);
+    this.oscillator.onended = () => Promise.resolve();
+  },
+
+  playInTimePromise(value, time) {
+    return new Promise(resolve => {
+      this.setup();
+      log.debug(`Tone value: ${value}`);
+      this.oscillator.frequency.setValueAtTime(
+        value,
+        this.context.currentTime + time,
+      );
+      this.gainNode.gain.setValueAtTime(0, this.context.currentTime + time);
+      this.gainNode.gain.linearRampToValueAtTime(
+        1,
+        this.context.currentTime + time + 0.01,
+      );
+      this.oscillator.start(this.context.currentTime + time);
+      this.stopAtTime(time);
+      this.oscillator.onended = () => resolve(value);
+    });
   },
 
   stopAtTime(time) {

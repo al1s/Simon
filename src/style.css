@@ -61,6 +61,27 @@ body {
   grid-row: 3 / 5;
 }
 
+.--blink-UL {
+  background-image: url("data:image/svg+xml;utf8, <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' id='sector_xY'><path fill='hsl(137, 95%, 64%)'  d='M100,100 L0,100 A100,100 1 0,1 100,0z' /></svg>");
+}
+
+.--blink-UR {
+  background-image: url("data:image/svg+xml;utf8, <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' id='sector_XY'><path fill='hsl(355, 97%, 86%)'  d='M0,100 L0,0 A100,100 1 0,1 100,100 z' /></svg>");
+}
+
+.--blink-LL {
+  background-image: url("data:image/svg+xml;utf8, <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' id='sector_xy'><path fill='hsl(60, 76%, 100%)'  d='M100,0 L100,100 A100,100 1 0,1 0,0 z' /></svg>");
+}
+
+.--blink-LR {
+  background-image: url("data:image/svg+xml;utf8, <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' id='sector_Xy'><path fill='hsl(242, 81%, 88%)'  d='M0,0 L100,0 A100,100 1 0,1 0,100 z' /></svg>");
+}
+
+.--noevents {
+  cursor: auto;
+  pointer-events: none;
+}
+
 .menu {
   align-items: center;
   background-color: var(--secondary-color);
