@@ -188,11 +188,24 @@ var App = {
     this.sequence = this.generateSequence(this.stepsInGame);
     this.syncMessage(this.messageStop);
     this.togglePressedState(e);
-    setTimeout(() => {
-      this.syncMessage(this.currentStep);
-      this.togglePressedState(e);
-      this.playSequence(this.sequence, this.currentStep);
-    }, this.reactionDelay);
+    this.later(this.reactionDelay, [this.currentStep])
+      .then(args => {
+        this.syncMessage(...args);
+        return [e];
+      })
+      .then(args => {
+        this.togglePressedState(...args);
+        return this.later(this.reactionDelay, [
+          this.sequence,
+          this.currentStep,
+        ]);
+      })
+      .then(args => this.playSequence(...args));
+    // setTimeout(() => {
+    //   this.syncMessage(this.currentStep);
+    //   this.togglePressedState(e);
+    //   this.playSequence(this.sequence, this.currentStep);
+    // }, this.reactionDelay);
   },
 
   handleWin() {
@@ -242,15 +255,20 @@ var UI = {
       if (this.currentNoteInStep === this.currentStep) {
         if (this.currentStep === this.stepsInGame) {
           this.syncMessage(this.messageWin);
-          setTimeout(() => this.handleWin(), this.reactionDelay);
+          this.later(this.reactionDelay).then(this.handleWin());
+          // setTimeout(() => this.handleWin(), this.reactionDelay);
         } else {
           this.currentStep += 1;
           this.currentNoteInStep = 1;
           this.syncMessage(this.currentStep);
-          setTimeout(
-            () => this.playSequence(this.sequence, this.currentStep),
-            this.reactionDelay,
-          );
+          this.later(this.reactionDelay, [
+            this.sequence,
+            this.currentStep,
+          ]).then(args => this.playSequence(...args));
+          // setTimeout(
+          //   () => this.playSequence(this.sequence, this.currentStep),
+          //   this.reactionDelay,
+          // );
         }
       } else this.currentNoteInStep += 1;
     } else {
@@ -258,15 +276,29 @@ var UI = {
       this.syncMessage(this.messageError);
 
       if (this.strictMode) {
-        setTimeout(() => this.handleStart(), this.reactionDelay * 2);
+        this.later(this.reactionDelay * 2).then(() => this.handleStart());
+        // setTimeout(() => this.handleStart(), this.reactionDelay * 2);
       } else {
         this.currentNoteInStep = 1;
-        setTimeout(() => {
-          this.syncMessage(this.currentStep);
-          this.playSequence(this.sequence, this.currentStep);
-        }, this.reactionDelay);
+        this.later(this.reactionDelay, [this.currentStep])
+          .then(args => {
+            this.syncMessage(...args);
+            return this.later(this.reactionDelay, [
+              this.sequence,
+              this.currentStep,
+            ]);
+          })
+          .then(args => this.playSequence(...args));
+        // setTimeout(() => {
+        //   this.syncMessage(this.currentStep);
+        //   this.playSequence(this.sequence, this.currentStep);
+        // }, this.reactionDelay);
       }
     }
+  },
+
+  later(delay, value = []) {
+    return new Promise(resolve => setTimeout(() => resolve([...value]), delay));
   },
 
   playSound(e) {
