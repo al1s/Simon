@@ -117,21 +117,31 @@ var App = {
   playSequence(sequence, step) {
     log.debug(`Playing sequence on step ${step}`);
     sequence.slice(0, step).forEach((note, ndx) => {
+      // fill in the list of buttons to blink when each note plays;
       this.notesInQueue.push({
         note,
         time: ndx * 60 / this.tempo + this.context.currentTime,
       });
-      // this.playInTime(this.soundLib[note], ndx * 60 / this.tempo);
     });
     log.debug(JSON.stringify(this.notesInQueue));
     this.requestId = window.requestAnimFrame(this.draw);
     return Promise.all(
-      this.notesInQueue.map(item =>
-        this.playInTimePromise(
-          this.soundLib[item.note],
-          item.time - this.context.currentTime,
-        ),
-      ),
+      this.notesInQueue.map((item, ndx, arr) => {
+        if (ndx === arr.length - 1) {
+          // user interaction shouldn't stuck while the last note is playing -
+          // as long as it starts sound the app should be ready to interaction;
+          // so we don't need to wait for the last promise in a row to be resolved;
+          this.playInTimePromise(
+            this.soundLib[item.note],
+            item.time - this.context.currentTime,
+          );
+        } else {
+          return this.playInTimePromise(
+            this.soundLib[item.note],
+            item.time - this.context.currentTime,
+          );
+        }
+      }),
     );
   },
 
@@ -140,16 +150,20 @@ var App = {
     let time = 0;
     sequence.forEach((note, ndx) => {
       console.log(`note in phrase: ${note}`);
+      // play a single note from the sequence
       if (typeof note[0] !== 'object') {
-        this.playInTime(soundLib[note[0]], time);
+        this.playInTimePromise(soundLib[note[0]], time);
         this.notesInQueue.push({
+          // the blinking effect goes round starting from the upper right button;
           note: this.gameButtonNames[ndx > 3 ? ndx % 4 : ndx],
           time: time + this.context.currentTime,
         });
       } else {
+        // play a chord from the sequence
         note[0].forEach(item => {
-          this.playInTime(soundLib[item], time, time);
+          this.playInTimePromise(soundLib[item], time, time);
           this.notesInQueue.push({
+            // on chord blink with all buttons;
             note: 'ALL',
             time: time + this.context.currentTime,
           });
@@ -194,13 +208,6 @@ var App = {
     };
     this.playPhrase(fanfareSeq, fanfareSounds);
   },
-
-  repeatSequence() {
-    this.pauseListen();
-    this.later(this.reactionDelay * 0.5, [this.sequence, this.currentStep])
-      .then(args => this.playSequence(...args))
-      .then(() => this.resumeListen());
-  },
 };
 
 var UI = {
@@ -236,11 +243,13 @@ var UI = {
   },
 
   pauseListenElm(elm) {
-    elm.classList.add('--noevents');
+    elm.classList.remove('--events-enabled');
+    elm.classList.add('--events-disabled');
   },
 
   resumeListenElm(elm) {
-    elm.classList.remove('--noevents');
+    elm.classList.remove('--events-disabled');
+    elm.classList.add('--events-enabled');
   },
 
   blinkAttr(elm, className) {
@@ -290,9 +299,11 @@ var UI = {
     } else {
       log.debug('Missed!');
       this.syncMessage(this.messageError);
+      // restart the game if we are in a strict mode
       if (this.strictMode) {
         this.later(this.reactionDelay * 2).then(() => this.handleStart());
       } else {
+        // repeat the last step sequence
         this.currentNoteInStep = 1;
         this.later(this.reactionDelay, [this.currentStep])
           .then(args => {
@@ -309,6 +320,7 @@ var UI = {
   },
 
   handleStart(e) {
+    this.context.resume();
     this.currentStep = 1;
     this.currentNoteInStep = 1;
     this.sequence = this.generateSequence(this.stepsInGame);
@@ -326,6 +338,14 @@ var UI = {
           this.currentStep,
         ]);
       })
+      .then(args => this.playSequence(...args))
+      .then(() => this.resumeListen());
+  },
+
+  repeatSequence() {
+    this.pauseListen();
+    this.currentNoteInStep = 1;
+    this.later(this.reactionDelay * 0.5, [this.sequence, this.currentStep])
       .then(args => this.playSequence(...args))
       .then(() => this.resumeListen());
   },
