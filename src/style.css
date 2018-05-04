@@ -12,16 +12,13 @@ body {
 }
 
 .main {
-  border: 0.4rem solid var(--primary-color);
-  border-radius: 50%;
   background-color: var(--primary-color);
   display: grid;
-  grid-template-columns: 2fr, 1fr, 1fr, 2fr;
-  grid-template-rows: 2fr, 1fr, 1fr, 2fr;
+  grid-template-columns: 1fr 2fr 2fr 1fr;
+  grid-template-rows: 1fr 2fr 2fr 1fr;
   grid-gap: 0.4rem;
-  height: 80vw;
-  margin: 4rem auto;
-  width: 80vw;
+  height: 100vh;
+  width: 100vw;
 }
 
 .buttonGame {
@@ -38,43 +35,43 @@ body {
 }
 
 .button__UL {
-  background-image: url("data:image/svg+xml;utf8, <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' id='sector_xY'><path fill='green'  d='M100,100 L0,100 A100,100 1 0,1 100,0z' /></svg>");
+  background-color: green;
   grid-column: 1 / 3;
   grid-row: 1 / 3;
 }
 
 .button__UR {
-  background-image: url("data:image/svg+xml;utf8, <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' id='sector_XY'><path fill='red'  d='M0,100 L0,0 A100,100 1 0,1 100,100 z' /></svg>");
+  background-color: red;
   grid-column: 3 / 5;
   grid-row: 1 / 3;
 }
 
 .button__LL {
-  background-image: url("data:image/svg+xml;utf8, <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' id='sector_xy'><path fill='yellow'  d='M100,0 L100,100 A100,100 1 0,1 0,0 z' /></svg>");
+  background-color: yellow;
   grid-column: 1 / 3;
   grid-row: 3 / 5;
 }
 
 .button__LR {
-  background-image: url("data:image/svg+xml;utf8, <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' id='sector_Xy'><path fill='blue'  d='M0,0 L100,0 A100,100 1 0,1 0,100 z' /></svg>");
+  background-color: blue;
   grid-column: 3 / 5;
   grid-row: 3 / 5;
 }
 
 .--blink-UL {
-  background-image: url("data:image/svg+xml;utf8, <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' id='sector_xY'><path fill='hsl(137, 95%, 64%)'  d='M100,100 L0,100 A100,100 1 0,1 100,0z' /></svg>");
+  background-color: hsl(137, 95%, 64%);
 }
 
 .--blink-UR {
-  background-image: url("data:image/svg+xml;utf8, <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' id='sector_XY'><path fill='hsl(355, 97%, 86%)'  d='M0,100 L0,0 A100,100 1 0,1 100,100 z' /></svg>");
+  background-color: hsl(355, 97%, 86%);
 }
 
 .--blink-LL {
-  background-image: url("data:image/svg+xml;utf8, <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' id='sector_xy'><path fill='hsl(60, 76%, 100%)'  d='M100,0 L100,100 A100,100 1 0,1 0,0 z' /></svg>");
+  background-color: hsl(60, 76%, 100%);
 }
 
 .--blink-LR {
-  background-image: url("data:image/svg+xml;utf8, <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' id='sector_Xy'><path fill='hsl(242, 81%, 88%)'  d='M0,0 L100,0 A100,100 1 0,1 0,100 z' /></svg>");
+  background-color: hsl(242, 81%, 88%);
 }
 
 .--events-disabled {
@@ -179,8 +176,49 @@ body {
   .main {
     /* height: 50vw; */
     /* width: 50vw; */
+    /* height: 80vw; */
+    border: 0.4rem solid var(--primary-color);
+    border-radius: 50%;
+    /* width: 80vw; */
     height: 20rem;
+    margin: 4rem auto;
     width: 20rem;
+  }
+
+  .buttonGame {
+    background-color: transparent;
+  }
+
+  .button__UL {
+    background-image: url("data:image/svg+xml;utf8, <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' id='sector_xY'><path fill='green'  d='M100,100 L0,100 A100,100 1 0,1 100,0z' /></svg>");
+  }
+
+  .button__UR {
+    background-image: url("data:image/svg+xml;utf8, <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' id='sector_XY'><path fill='red'  d='M0,100 L0,0 A100,100 1 0,1 100,100 z' /></svg>");
+  }
+
+  .button__LL {
+    background-image: url("data:image/svg+xml;utf8, <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' id='sector_xy'><path fill='yellow'  d='M100,0 L100,100 A100,100 1 0,1 0,0 z' /></svg>");
+  }
+
+  .button__LR {
+    background-image: url("data:image/svg+xml;utf8, <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' id='sector_Xy'><path fill='blue'  d='M0,0 L100,0 A100,100 1 0,1 0,100 z' /></svg>");
+  }
+
+  .--blink-UL {
+    background-image: url("data:image/svg+xml;utf8, <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' id='sector_xY'><path fill='hsl(137, 95%, 64%)'  d='M100,100 L0,100 A100,100 1 0,1 100,0z' /></svg>");
+  }
+
+  .--blink-UR {
+    background-image: url("data:image/svg+xml;utf8, <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' id='sector_XY'><path fill='hsl(355, 97%, 86%)'  d='M0,100 L0,0 A100,100 1 0,1 100,100 z' /></svg>");
+  }
+
+  .--blink-LL {
+    background-image: url("data:image/svg+xml;utf8, <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' id='sector_xy'><path fill='hsl(60, 76%, 100%)'  d='M100,0 L100,100 A100,100 1 0,1 0,0 z' /></svg>");
+  }
+
+  .--blink-LR {
+    background-image: url("data:image/svg+xml;utf8, <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' id='sector_Xy'><path fill='hsl(242, 81%, 88%)'  d='M0,0 L100,0 A100,100 1 0,1 0,100 z' /></svg>");
   }
 
   .menu {
@@ -251,6 +289,7 @@ html {
   box-sizing: inherit;
 }
 
+body,
 div,
 p,
 button {

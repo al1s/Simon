@@ -10,7 +10,8 @@
   +(UI) add control panel;
   +(UI) conditions to stop requestAnimationFrame loop;
   +(UI) make UI elements wait till current routine executes;
-  (UI) block game buttons while playing sequence;
+  +(UI) block game buttons while playing sequence;
+  (UI) press on start button should stop all current flows and restart the game;
   +(game) test thorouhgly:
     - strict is not working;
     - sometimes after error it starts to play the whole sequence;
@@ -272,21 +273,21 @@ var UI = {
 
   handleGameState(e) {
     this.playSound(e);
-    this.pauseListen();
     var notePressed = this.getNote(e);
     if (this.sequence[this.currentNoteInStep - 1] === notePressed) {
       log.debug('Bingo!');
       // We've played the whole step
       if (this.currentNoteInStep === this.currentStep) {
         // we've played the whole sequence
+        this.pauseListen();
         if (this.currentStep === this.stepsInGame) {
-          this.syncMessage(this.messageWin);
+          this.showMessage(this.messageWin);
           this.later(this.reactionDelay).then(this.handleWin());
           // we are still somewhere in a sequence and ready for a new step
         } else {
           this.currentStep += 1;
           this.currentNoteInStep = 1;
-          this.syncMessage(this.currentStep);
+          this.showMessage(this.currentStep);
           this.later(this.reactionDelay, [this.sequence, this.currentStep])
             .then(args => this.playSequence(...args))
             .then(() => this.resumeListen());
@@ -294,20 +295,20 @@ var UI = {
         // wait for another note in current step
       } else {
         this.currentNoteInStep += 1;
-        this.resumeListen();
       }
     } else {
       log.debug('Missed!');
-      this.syncMessage(this.messageError);
+      this.showMessage(this.messageError);
       // restart the game if we are in a strict mode
       if (this.strictMode) {
         this.later(this.reactionDelay * 2).then(() => this.handleStart());
       } else {
+        this.pauseListen();
         // repeat the last step sequence
         this.currentNoteInStep = 1;
         this.later(this.reactionDelay, [this.currentStep])
           .then(args => {
-            this.syncMessage(...args);
+            this.showMessage(...args);
             return this.later(this.reactionDelay, [
               this.sequence,
               this.currentStep,
@@ -324,11 +325,11 @@ var UI = {
     this.currentStep = 1;
     this.currentNoteInStep = 1;
     this.sequence = this.generateSequence(this.stepsInGame);
-    this.syncMessage(this.messageStop);
+    this.showMessage(this.messageStop);
     this.togglePressedState(e);
     this.later(this.reactionDelay, [this.currentStep])
       .then(args => {
-        this.syncMessage(...args);
+        this.showMessage(...args);
         return [e];
       })
       .then(args => {
@@ -370,7 +371,7 @@ var UI = {
     this.togglePressedState(e);
   },
 
-  syncMessage(message) {
+  showMessage(message) {
     let messageElm = document.querySelector('#messageElm');
     messageElm.innerHTML = message;
   },
