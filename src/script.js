@@ -271,6 +271,7 @@ var UI = {
   },
 
   handleGameState(e) {
+    this.vibrateOnTouch();
     this.playSound(e);
     this.pauseListen();
     var notePressed = this.getNote(e);
@@ -359,6 +360,17 @@ var UI = {
     log.trace(e);
     let value = this.getNote(e);
     this.playSequence([value], 1);
+  },
+
+  vibrateOnTouch() {
+    if ('vibrate' in navigator) {
+      navigator.vibrate =
+        navigator.vibrate ||
+        navigator.webkitVibrate ||
+        navigator.mozVibrate ||
+        navigator.msVibrate;
+      navigator.vibrate(30);
+    }
   },
 
   togglePressedState(e) {
